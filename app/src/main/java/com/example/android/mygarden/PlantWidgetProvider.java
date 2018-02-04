@@ -15,19 +15,31 @@ import com.example.android.mygarden.ui.MainActivity;
 public class PlantWidgetProvider extends AppWidgetProvider
 {
 
-    static void updateAppWidget(Context context,
-                                AppWidgetManager appWidgetManager,
-                                int appWidgetId)
+    public static void updatePlantWidgets( Context context,
+                                           AppWidgetManager appWidgetManager,
+                                           int imgRes,
+                                           int[] appWidgetIds)
+    {
+        for(int appWidgetId : appWidgetIds)
+        {
+            updateAppWidget(context, appWidgetManager, imgRes, appWidgetId);
+        }
+    }
+
+    public static void updateAppWidget( Context context,
+                                        AppWidgetManager appWidgetManager,
+                                        int imgRes,
+                                        int appWidgetId)
     {
         // Construct the RemoteViews object
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.plant_widget);
 
         Intent intent = new Intent(context, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
+
+        views.setImageViewResource(R.id.widget_plant_image, imgRes);
         views.setOnClickPendingIntent(R.id.widget_plant_image, pendingIntent);
 
-
-        // TODO (4): Create a PendingIntent for the PlantWateringService and setOnClickPendingIntent for widget_water_button
         // Add the wateringservice click handler
         Intent wateringIntent = new Intent(context, PlantWateringService.class);
         wateringIntent.setAction(PlantWateringService.ACTION_WATER_PLANTS);
@@ -52,7 +64,7 @@ public class PlantWidgetProvider extends AppWidgetProvider
         // There may be multiple widgets active, so update all of them
         for (int appWidgetId : appWidgetIds)
         {
-            updateAppWidget(context, appWidgetManager, appWidgetId);
+            updateAppWidget(context, appWidgetManager, R.layout.plant_widget, appWidgetId);
         }
     }
 
