@@ -4,6 +4,7 @@ import android.app.IntentService;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -19,8 +20,12 @@ import com.example.android.mygarden.utils.PlantUtils;
 
 public class PlantWateringService extends IntentService
 {
-    public static final String ACTION_WATER_PLANTS = "com.example.android.mygarden.action.water_plants";
+    // TODO (1): Change ACTION_WATER_PLANTS to ACTION_WATER_PLANT and
+    // use EXTRA_PLANT_ID to pass the plant ID to the service and update the query to use SINGLE_PLANT_URI
+    public static final String ACTION_WATER_PLANT = "com.example.android.mygarden.action.water_plant";
+    //public static final String ACTION_WATER_PLANTS = "com.example.android.mygarden.action.water_plants";
     public static final String ACITON_UPDATE_PLANT_WIDGETS = "com.example.android.mygarden.action.update_plant_widgets";
+    public static final String EXTRA_PLANT_ID = "com.example.android.mygarden.extra.PLANT_ID";
 
     public PlantWateringService()
     {
@@ -32,9 +37,14 @@ public class PlantWateringService extends IntentService
         startAction(context, ACITON_UPDATE_PLANT_WIDGETS);
     }
 
-    public static void startActionWaterPlants(Context context)
+    /*public static void startActionWaterPlants(Context context)
     {
         startAction(context, ACTION_WATER_PLANTS);
+    }*/
+
+    public static void startActionWaterPlant(Context context)
+    {
+        startAction(context, ACTION_WATER_PLANT);
     }
 
     protected static void startAction(Context context, String action)
@@ -49,9 +59,14 @@ public class PlantWateringService extends IntentService
         if(null != intent)
         {
             final String action = intent.getAction();
-            if(ACTION_WATER_PLANTS.equals(action))
+            /*if(ACTION_WATER_PLANTS.equals(action))
             {
                 handleActionWaterPlants();
+            }
+            else*/
+            if(ACTION_WATER_PLANT.equals(action))
+            {
+                handleActionWaterPlant();
             }
             else if(ACITON_UPDATE_PLANT_WIDGETS.equals(action)) {
                 handleActionUpdatePlantWidgets();
@@ -90,11 +105,31 @@ public class PlantWateringService extends IntentService
         }
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
         int[] appWidgetIds = appWidgetManager.getAppWidgetIds(new ComponentName(this, PlantWidgetProvider.class));
-        PlantWidgetProvider.updatePlantWidgets(this, appWidgetManager, imgRes, appWidgetIds);
+
+        appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.widget_grid_view);
+
+        // for now, it is always the 1st index
+        int plantId = 0;
+        boolean showWaterButton = true;
+        PlantWidgetProvider.updatePlantWidgets(this, appWidgetManager, imgRes, appWidgetIds, plantId, showWaterButton);
     }
 
-    protected void handleActionWaterPlants()
+    protected void handleActionWaterPlant()
     {
+        Uri singlePlantUri = getSinglePlantUri();
+        ContentValues contentValues = new ContentValues();
+        long timeNow = System.currentTimeMillis();
+        contentValues.put(PlantContract.PlantEntry.COLUMN_LAST_WATERED_TIME, timeNow);
+        // Update only plants that are still alive
+        getContentResolver().update(singlePlantUri,
+                            contentValues,
+                            PlantContract.PlantEntry.COLUMN_LAST_WATERED_TIME+">?",
+                            new String[]{String.valueOf(timeNow - PlantUtils.MAX_AGE_WITHOUT_WATER)});
+    }
+
+    /*protected void handleActionWaterPlants()
+    {
+        // *** check update constraints for correct behavior ***
         Uri PLANTS_URI = getPlantsUri();
         ContentValues contentValues = new ContentValues();
         long timeNow = System.currentTimeMillis();
@@ -104,8 +139,7 @@ public class PlantWateringService extends IntentService
                             contentValues,
                             PlantContract.PlantEntry.COLUMN_LAST_WATERED_TIME+">?",
                             new String[]{String.valueOf(timeNow - PlantUtils.MAX_AGE_WITHOUT_WATER)});
-    }
-
+    }*/
 
     protected  Uri getPlantsUri()
     {
@@ -113,5 +147,14 @@ public class PlantWateringService extends IntentService
                 .appendPath(com.example.android.mygarden.provider.PlantContract.PATH_PLANTS).build();
 
         return PLANTS_URI;
+    }
+
+    protected  Uri getSinglePlantUri()
+    {
+        // *** need to get the 1st plant in display
+        int id = 0;
+        ContentUris contentUris = new ContentUris();
+        Uri uri = contentUris.withAppendedId(getPlantsUri(), id);
+        return uri;
     }
 }
