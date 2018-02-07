@@ -4,11 +4,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Bundle;
 import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
 import com.example.android.mygarden.provider.PlantContract;
+import com.example.android.mygarden.ui.PlantDetailActivity;
 import com.example.android.mygarden.utils.PlantUtils;
 
 /**
@@ -24,7 +26,7 @@ public class GridWidgetService extends RemoteViewsService
     }
 }
 
-public class GridRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory
+class GridRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory
 {
     Context mContext;
     Cursor mCursor;
@@ -47,12 +49,12 @@ public class GridRemoteViewsFactory implements RemoteViewsService.RemoteViewsFac
 
     @Override
     public boolean hasStableIds() {
-        return false;
+        return true;
     }
 
     @Override
     public long getItemId(int i) {
-        return 0;
+        return i;
     }
 
     @Override
@@ -78,18 +80,25 @@ public class GridRemoteViewsFactory implements RemoteViewsService.RemoteViewsFac
 
         //update plant image
         int imgRes = PlantUtils.getPlantImageRes(mContext,
-                                        timeNow-createdAt,
-                                        timeNow-wateredAt,
-                                                 plantType);
+                timeNow-createdAt,
+                timeNow-wateredAt,
+                plantType);
         views.setImageViewResource(R.id.widget_plant_image, imgRes);
         views.setTextViewText(R.id.widget_plant_id, String.valueOf(plantId));
         views.setViewVisibility(R.id.widget_water_button, View.GONE);
+
+        Bundle extras = new Bundle();
+        extras.putLong(PlantDetailActivity.EXTRA_PLANT_ID, plantId);
+        Intent fillInIntent = new Intent();
+        fillInIntent.putExtras(extras);
+        views.setOnClickFillInIntent(R.id.widget_plant_image, fillInIntent);
+
         return views;
     }
 
     @Override
     public int getViewTypeCount() {
-        return 0;
+        return 1;
     }
 
     @Override

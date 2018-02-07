@@ -53,11 +53,15 @@ public class PlantDetailActivity extends AppCompatActivity
         getSupportLoaderManager().initLoader(SINGLE_LOADER_ID, null, this);
     }
 
-    public void onBackButtonClick(View view) {
+    public void onBackButtonClick(View view)
+    {
         finish();
     }
 
     public void onWaterButtonClick(View view) {
+        PlantWateringService.startActionWaterPlant(this, mPlantId);
+
+        /*
         //check if already dead then can't water
         Uri SINGLE_PLANT_URI = ContentUris.withAppendedId(
                 BASE_CONTENT_URI.buildUpon().appendPath(PATH_PLANTS).build(), mPlantId);
@@ -76,6 +80,7 @@ public class PlantDetailActivity extends AppCompatActivity
 
         PlantWateringService.startActionUpdatePlantWidgets(this);
         cursor.close();
+        */
     }
 
     @Override
@@ -88,7 +93,9 @@ public class PlantDetailActivity extends AppCompatActivity
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-        if (cursor == null || cursor.getCount() < 1) return;
+        if (cursor == null || cursor.getCount() < 1)
+            return;
+
         cursor.moveToFirst();
         int createTimeIndex = cursor.getColumnIndex(PlantContract.PlantEntry.COLUMN_CREATION_TIME);
         int waterTimeIndex = cursor.getColumnIndex(PlantContract.PlantEntry.COLUMN_LAST_WATERED_TIME);
