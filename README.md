@@ -1,3 +1,5 @@
+Udacity Android nano-degree lesson -- exercise
+
 # My Garden
 Android AppWidgets lesson
 
